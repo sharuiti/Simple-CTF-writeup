@@ -12,6 +12,7 @@ Let's learn together and document our progress! ❤️
 ---
 
 ## 1. Reconnaissance
+<img width="1645" height="123" alt="image" src="https://github.com/user-attachments/assets/ad77ebc2-d454-4cbc-8819-5470ecfaf097" />
 
 The first step is reconnaissance: gathering information about our target and identifying the services running on it.
 We start by using **Nmap**, a network scanning tool, to discover open ports and identify the services and their versions.
